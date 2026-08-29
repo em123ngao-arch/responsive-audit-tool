@@ -73,6 +73,8 @@ async function runAudit(browser, url) {
     results.overallScore = calculateOverallScore(results.criteria);
     results.grade = getGrade(results.overallScore);
     results.recommendations = generateRecommendations(results.criteria, viewportData);
+  } else {
+    throw new Error('Không thể truy cập hoặc render trang web. Vui lòng kiểm tra lại URL hoặc thử website khác.');
   }
 
   return results;
@@ -85,30 +87,39 @@ async function analyzeViewport(browser, url, viewport) {
   const page = await browser.newPage();
   
   try {
+    // Set modern User-Agent to avoid antibot blocks
+    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
+
     await page.setViewport({
       width: viewport.width,
       height: viewport.height,
-      deviceScaleFactor: viewport.category.startsWith('Mobile') ? 2 : 1,
+      deviceScaleFactor: 1, // 1 for high performance and low memory
       isMobile: viewport.category.startsWith('Mobile'),
       hasTouch: viewport.category !== 'Desktop' && viewport.category !== 'Desktop L',
     });
 
     const startTime = Date.now();
-    await page.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: 30000,
-    });
+    try {
+      await page.goto(url, {
+        waitUntil: 'domcontentloaded',
+        timeout: 15000,
+      });
+    } catch (e) {
+      // If domcontentloaded fails or times out, try continuing if page has content
+      console.warn(`Warning loading ${viewport.name}:`, e.message);
+    }
+
     const loadTime = Date.now() - startTime;
 
-    // Wait a bit for animations/lazy loading
-    await new Promise(r => setTimeout(r, 1000));
+    // Small delay for CSS layout settle
+    await new Promise(r => setTimeout(r, 400));
 
     // Take screenshot
     const screenshot = await page.screenshot({
       encoding: 'base64',
       fullPage: false,
       type: 'webp',
-      quality: 80,
+      quality: 70,
     });
 
     // Run DOM analysis

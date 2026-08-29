@@ -147,7 +147,7 @@ function animateLoadingSteps() {
     $('#progress-bar').style.width = progress + '%';
 
     currentStep++;
-  }, 4000);
+  }, 1500);
 }
 
 function completeLoading() {

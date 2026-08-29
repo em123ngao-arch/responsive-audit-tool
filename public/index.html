@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Responsive Audit Tool — Đánh giá Responsive Design</title>
+  <meta name="description" content="Công cụ đánh giá responsive design hiện đại cho website. Phân tích 12 tiêu chí, chấm điểm và đưa ra khuyến nghị cải thiện.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <main id="app">
+    <!-- Hero Section -->
+    <section class="hero" id="hero-section">
+      <div class="hero-badge">
+        <span class="badge-dot"></span>
+        Responsive Design Audit Tool v1.0
+      </div>
+      <h1 class="hero-title">
+        Đánh giá <span class="gradient-text">Responsive</span><br>
+        cho Website của bạn
+      </h1>
+      <p class="hero-subtitle">
+        Phân tích 12 tiêu chí responsive chuẩn hiện đại, chụp screenshot tại 6 viewport sizes và đưa ra khuyến nghị cải thiện chi tiết.
+      </p>
+
+      <!-- URL Input -->
+      <div class="input-container" id="input-container">
+        <div class="input-wrapper">
+          <div class="input-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+          </div>
+          <input
+            type="url"
+            id="url-input"
+            placeholder="Nhập URL trang web cần đánh giá (VD: google.com)"
+            autocomplete="url"
+            spellcheck="false"
+          >
+          <button id="audit-btn" onclick="startAudit()">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <span>Bắt đầu Audit</span>
+          </button>
+        </div>
+        <div class="input-hint">
+          Nhấn Enter hoặc click nút để bắt đầu • Quá trình audit mất khoảng 30-60 giây
+        </div>
+      </div>
+    </section>
+
+    <!-- Loading Section -->
+    <section class="loading-section hidden" id="loading-section">
+      <div class="loading-card">
+        <div class="loading-spinner">
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring"></div>
+          <div class="spinner-ring"></div>
+          <div class="spinner-icon">🔍</div>
+        </div>
+        <h2 class="loading-title">Đang phân tích responsive...</h2>
+        <p class="loading-url" id="loading-url"></p>
+        <div class="loading-steps" id="loading-steps">
+          <div class="step active" id="step-1">
+            <div class="step-dot"></div>
+            <span>Khởi tạo trình duyệt</span>
+          </div>
+          <div class="step" id="step-2">
+            <div class="step-dot"></div>
+            <span>Test trên 6 viewport sizes</span>
+          </div>
+          <div class="step" id="step-3">
+            <div class="step-dot"></div>
+            <span>Chụp screenshots</span>
+          </div>
+          <div class="step" id="step-4">
+            <div class="step-dot"></div>
+            <span>Phân tích DOM & CSS</span>
+          </div>
+          <div class="step" id="step-5">
+            <div class="step-dot"></div>
+            <span>Tạo báo cáo</span>
+          </div>
+        </div>
+        <div class="loading-progress">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error Section -->
+    <section class="error-section hidden" id="error-section">
+      <div class="error-card">
+        <div class="error-icon">❌</div>
+        <h2>Không thể đánh giá</h2>
+        <p id="error-message"></p>
+        <button class="btn-retry" onclick="resetToInput()">Thử lại</button>
+      </div>
+    </section>
+
+    <!-- Results Section -->
+    <section class="results-section hidden" id="results-section">
+      <!-- Results Header -->
+      <div class="results-header">
+        <button class="btn-back" onclick="resetToInput()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          Audit mới
+        </button>
+        <div class="audit-meta">
+          <span id="audit-url" class="audit-url-display"></span>
+          <span id="audit-duration" class="audit-duration"></span>
+        </div>
+      </div>
+
+      <!-- Score Overview -->
+      <div class="score-overview" id="score-overview">
+        <div class="score-card">
+          <div class="score-gauge">
+            <svg viewBox="0 0 200 200" class="gauge-svg">
+              <circle cx="100" cy="100" r="85" class="gauge-bg"></circle>
+              <circle cx="100" cy="100" r="85" class="gauge-fill" id="gauge-fill"></circle>
+            </svg>
+            <div class="score-value">
+              <span class="score-number" id="score-number">0</span>
+              <span class="score-max">/100</span>
+            </div>
+          </div>
+          <div class="score-info">
+            <div class="grade-badge" id="grade-badge">
+              <span class="grade-emoji" id="grade-emoji"></span>
+              <span class="grade-label" id="grade-label"></span>
+            </div>
+            <p class="score-description" id="score-description"></p>
+          </div>
+        </div>
+
+        <!-- Quick stats -->
+        <div class="quick-stats" id="quick-stats">
+          <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="stat-pass">0</div>
+            <div class="stat-label">Đạt</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">⚠️</div>
+            <div class="stat-value" id="stat-warn">0</div>
+            <div class="stat-label">Cảnh báo</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">❌</div>
+            <div class="stat-value" id="stat-fail">0</div>
+            <div class="stat-label">Lỗi</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">📱</div>
+            <div class="stat-value" id="stat-viewports">6</div>
+            <div class="stat-label">Viewports</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab Navigation -->
+      <div class="tabs" id="result-tabs">
+        <button class="tab active" data-tab="screenshots" onclick="switchTab('screenshots')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+          Screenshots
+        </button>
+        <button class="tab" data-tab="criteria" onclick="switchTab('criteria')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          Chi tiết đánh giá
+        </button>
+        <button class="tab" data-tab="recommendations" onclick="switchTab('recommendations')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          Khuyến nghị
+        </button>
+      </div>
+
+      <!-- Tab Content: Screenshots -->
+      <div class="tab-content active" id="tab-screenshots">
+        <div class="screenshots-grid" id="screenshots-grid"></div>
+      </div>
+
+      <!-- Tab Content: Criteria -->
+      <div class="tab-content" id="tab-criteria">
+        <div class="criteria-list" id="criteria-list"></div>
+      </div>
+
+      <!-- Tab Content: Recommendations -->
+      <div class="tab-content" id="tab-recommendations">
+        <div class="recommendations-list" id="recommendations-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Screenshot Modal -->
+  <div class="modal-overlay hidden" id="screenshot-modal" onclick="closeModal(event)">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+      <div class="modal-header" id="modal-header"></div>
+      <img id="modal-image" src="" alt="Screenshot preview">
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>Responsive Audit Tool — Built with Puppeteer & Modern Web Standards</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

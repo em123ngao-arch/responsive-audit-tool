@@ -1273,3 +1273,427 @@ main {
     font-size: 2.8rem;
   }
 }
+
+/* ==========================================
+   WEB VITALS & LIGHTHOUSE — Styles
+   ========================================== */
+
+/* --- Feature Pills (Hero) --- */
+.feature-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+  margin-top: 2rem;
+  animation: fadeInUp 0.8s ease 0.4s both;
+}
+
+.pill {
+  padding: 0.35rem 0.9rem;
+  background: var(--bg-glass);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: 100px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  backdrop-filter: blur(10px);
+  transition: var(--transition-base);
+}
+
+.pill:hover {
+  color: var(--text-primary);
+  border-color: rgba(0, 212, 255, 0.3);
+  background: rgba(0, 212, 255, 0.06);
+}
+
+/* --- Score Breakdown Pills --- */
+.score-breakdown {
+  margin-top: 1rem;
+}
+
+.score-breakdown-pills {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.breakdown-pill {
+  padding: 0.3rem 0.8rem;
+  background: var(--bg-glass);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: 100px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.breakdown-pill strong {
+  color: var(--accent-cyan);
+}
+
+.breakdown-note {
+  font-size: 0.8rem;
+  color: var(--warn);
+  margin-top: 0.5rem;
+}
+
+/* --- Vitals Sections Layout --- */
+.vitals-section {
+  margin-bottom: 2rem;
+}
+
+.vitals-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.vitals-section-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* --- Device Toggle Buttons --- */
+.vitals-device-toggle {
+  display: flex;
+  gap: 0.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+.device-btn {
+  padding: 0.3rem 0.75rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.device-btn.active {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.device-btn:hover:not(.active) {
+  color: var(--text-secondary);
+}
+
+/* --- Lighthouse Score Cards Grid --- */
+.lh-scores-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.lh-score-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--card-radius);
+  backdrop-filter: blur(20px);
+  transition: var(--transition-base);
+  gap: 0.75rem;
+}
+
+.lh-score-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.lh-score-ring-wrapper {
+  position: relative;
+  width: 72px;
+  height: 72px;
+}
+
+.lh-ring-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.lh-ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.05);
+  stroke-width: 5;
+}
+
+.lh-ring-fill {
+  fill: none;
+  stroke-width: 5;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lh-score-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.lh-score-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.lh-score-status {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 100px;
+  text-align: center;
+}
+
+.lh-status-good { background: var(--pass-bg); color: var(--pass); border: 1px solid var(--pass-border); }
+.lh-status-needs-improvement { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-border); }
+.lh-status-poor { background: var(--fail-bg); color: var(--fail); border: 1px solid var(--fail-border); }
+
+/* --- Core Web Vitals Cards --- */
+.cwv-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+
+.cwv-card {
+  padding: 1.25rem;
+  background: var(--bg-card);
+  border-radius: var(--card-radius);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--bg-glass-border);
+  transition: var(--transition-base);
+}
+
+.cwv-card:hover {
+  transform: translateY(-2px);
+}
+
+.cwv-good    { border-left: 3px solid var(--pass); }
+.cwv-warn    { border-left: 3px solid var(--warn); }
+.cwv-poor    { border-left: 3px solid var(--fail); }
+.cwv-unknown { border-left: 3px solid rgba(255,255,255,0.1); }
+
+.cwv-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.cwv-label {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cwv-status-badge {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.cwv-value {
+  font-size: 1.8rem;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cwv-good    .cwv-value { background: none; -webkit-text-fill-color: var(--pass); }
+.cwv-warn    .cwv-value { background: none; -webkit-text-fill-color: var(--warn); }
+.cwv-poor    .cwv-value { background: none; -webkit-text-fill-color: var(--fail); }
+.cwv-unknown .cwv-value { background: none; -webkit-text-fill-color: var(--text-muted); }
+
+.cwv-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.cwv-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+
+.cwv-thresholds {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cwv-threshold-good {
+  font-size: 0.68rem;
+  color: var(--pass);
+  background: var(--pass-bg);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.cwv-threshold-poor {
+  font-size: 0.68rem;
+  color: var(--fail);
+  background: var(--fail-bg);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+/* --- Performance Opportunities --- */
+.opportunities-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.opportunity-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--card-radius-sm);
+  backdrop-filter: blur(20px);
+}
+
+.opportunity-score-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.opportunity-score-dot.pass { background: var(--pass); }
+.opportunity-score-dot.warn { background: var(--warn); }
+.opportunity-score-dot.fail { background: var(--fail); }
+
+.opportunity-content { flex: 1; }
+
+.opportunity-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.opportunity-value {
+  font-size: 0.78rem;
+  color: var(--warn);
+  font-family: var(--font-mono);
+  margin-top: 0.15rem;
+}
+
+/* --- Accessibility Issues --- */
+.a11y-issues-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.a11y-issue-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--bg-glass-border);
+  border-radius: var(--card-radius-sm);
+  backdrop-filter: blur(20px);
+}
+
+.a11y-score-badge {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.a11y-score-badge.fail { background: var(--fail-bg); color: var(--fail); border: 1px solid var(--fail-border); }
+.a11y-score-badge.warn { background: var(--warn-bg); color: var(--warn); border: 1px solid var(--warn-border); }
+
+.a11y-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* --- Vitals Error State --- */
+.vitals-error {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--warn-border);
+  border-radius: var(--card-radius);
+  backdrop-filter: blur(20px);
+}
+
+.vitals-error-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+.vitals-error h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.vitals-error p {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  max-width: 480px;
+  margin: 0 auto 0.5rem;
+}
+
+.vitals-error-note {
+  font-size: 0.8rem !important;
+  color: var(--text-muted) !important;
+  margin-top: 1rem !important;
+}
+
+.vitals-no-data {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  padding: 2rem;
+  text-align: center;
+}
+
+/* --- Responsive overrides for Web Vitals --- */
+@media (max-width: 900px) {
+  .lh-scores-grid { grid-template-columns: repeat(2, 1fr); }
+  .cwv-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 600px) {
+  .lh-scores-grid { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+  .cwv-grid { grid-template-columns: 1fr; }
+  .vitals-section-header { flex-direction: column; align-items: flex-start; }
+  .feature-pills { gap: 0.4rem; }
+}

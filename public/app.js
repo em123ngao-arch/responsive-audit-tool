@@ -1,5 +1,6 @@
 /**
- * app.js — Client-side logic for Responsive Audit Tool
+ * app.js — Client-side logic for Responsive Audit Tool v2.0
+ * Includes: DOM criteria rendering, Lighthouse scores, Core Web Vitals display
  */
 
 // ==================== State ====================
@@ -112,11 +113,13 @@ function resetToInput() {
   showSection('hero');
   auditResults = null;
   clearInterval(loadingInterval);
-  // Reset loading steps
-  for (let i = 1; i <= 5; i++) {
+  // Reset loading steps (7 steps now)
+  for (let i = 1; i <= 7; i++) {
     const step = $(`#step-${i}`);
-    step.classList.remove('active', 'done');
-    if (i === 1) step.classList.add('active');
+    if (step) {
+      step.classList.remove('active', 'done');
+      if (i === 1) step.classList.add('active');
+    }
   }
   $('#progress-bar').style.width = '0%';
   setTimeout(() => $('#url-input')?.focus(), 300);
@@ -125,7 +128,7 @@ function resetToInput() {
 // ==================== Loading Animation ====================
 function animateLoadingSteps() {
   let currentStep = 1;
-  const totalSteps = 5;
+  const totalSteps = 7; // Updated: 7 steps including Lighthouse
 
   loadingInterval = setInterval(() => {
     if (currentStep > totalSteps) {
@@ -147,15 +150,17 @@ function animateLoadingSteps() {
     $('#progress-bar').style.width = progress + '%';
 
     currentStep++;
-  }, 1500);
+  }, 2000); // 2 seconds per step for 7 steps (~50-70s total audit)
 }
 
 function completeLoading() {
   clearInterval(loadingInterval);
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 7; i++) {
     const step = $(`#step-${i}`);
-    step.classList.remove('active');
-    step.classList.add('done');
+    if (step) {
+      step.classList.remove('active');
+      step.classList.add('done');
+    }
   }
   $('#progress-bar').style.width = '100%';
 }
@@ -166,7 +171,7 @@ function renderResults(data) {
   $('#audit-url').textContent = data.url;
   $('#audit-duration').textContent = `⏱ ${data.auditDuration}`;
 
-  // Score gauge
+  // Score gauge (overall combined score)
   animateScore(data.overallScore);
 
   // Grade
@@ -176,12 +181,15 @@ function renderResults(data) {
 
   // Description
   const descriptions = {
-    'Excellent': 'Website của bạn có responsive design xuất sắc! Hiển thị tốt trên mọi thiết bị.',
-    'Good': 'Responsive design tốt, nhưng vẫn có một số điểm cần cải thiện để đạt chuẩn hiện đại.',
-    'Needs Work': 'Website có vấn đề responsive cần được sửa chữa. Trải nghiệm trên mobile/tablet chưa tối ưu.',
-    'Poor': 'Website cần refactor responsive design nghiêm túc. Người dùng mobile sẽ gặp nhiều khó khăn.',
+    'Excellent': 'Website của bạn đạt chuẩn xuất sắc! Responsive design tốt, performance nhanh và accessibility cao.',
+    'Good': 'Responsive design tốt, performance khá. Vẫn còn một số điểm cải thiện để đạt chuẩn hiện đại.',
+    'Needs Work': 'Website có vấn đề cần sửa chữa. Trải nghiệm trên mobile/tablet và performance chưa tối ưu.',
+    'Poor': 'Website cần refactor nghiêm túc. Người dùng mobile sẽ gặp nhiều khó khăn.',
   };
   $('#score-description').textContent = descriptions[data.grade.label] || '';
+
+  // Score breakdown (DOM vs Lighthouse)
+  renderScoreBreakdown(data);
 
   // Quick stats
   const criteria = Object.values(data.criteria);
@@ -192,11 +200,32 @@ function renderResults(data) {
 
   // Render tabs
   renderScreenshots(data.viewports);
+  renderWebVitals(data);
   renderCriteria(data.criteria);
-  renderRecommendations(data.recommendations);
+  renderRecommendations(data.recommendations, data);
 
   // Default tab
   switchTab('screenshots');
+}
+
+function renderScoreBreakdown(data) {
+  const el = $('#score-breakdown');
+  if (!el) return;
+
+  if (data.lighthouse) {
+    const lhAvg = Math.round(
+      (data.lighthouse.mobile.performance + data.lighthouse.mobile.accessibility +
+       data.lighthouse.mobile.bestPractices + data.lighthouse.mobile.seo) / 4
+    );
+    el.innerHTML = `
+      <div class="score-breakdown-pills">
+        <span class="breakdown-pill">🔍 DOM: <strong>${data.domScore}</strong></span>
+        <span class="breakdown-pill">🔦 Lighthouse: <strong>${lhAvg}</strong></span>
+      </div>
+    `;
+  } else if (data.lighthouseError) {
+    el.innerHTML = `<p class="breakdown-note">⚠️ ${data.lighthouseError}</p>`;
+  }
 }
 
 function animateScore(targetScore) {
@@ -275,6 +304,219 @@ function renderScreenshots(viewports) {
   });
 }
 
+// ==================== Web Vitals (Lighthouse) ====================
+
+/**
+ * CWV thresholds based on Google's standards
+ * Ref: https://web.dev/vitals/
+ */
+const CWV_THRESHOLDS = {
+  lcp:  { good: 2500, poor: 4000, unit: 'ms', label: 'LCP', name: 'Largest Contentful Paint', desc: 'Thời gian hiển thị nội dung lớn nhất' },
+  fcp:  { good: 1800, poor: 3000, unit: 'ms', label: 'FCP', name: 'First Contentful Paint', desc: 'Thời gian nội dung đầu tiên xuất hiện' },
+  cls:  { good: 0.1,  poor: 0.25, unit: '',   label: 'CLS', name: 'Cumulative Layout Shift', desc: 'Mức độ dịch chuyển layout không mong muốn' },
+  tbt:  { good: 200,  poor: 600,  unit: 'ms', label: 'TBT', name: 'Total Blocking Time', desc: 'Tổng thời gian main thread bị block' },
+  si:   { good: 3400, poor: 5800, unit: 'ms', label: 'SI',  name: 'Speed Index', desc: 'Tốc độ hiển thị nội dung trên màn hình' },
+  tti:  { good: 3800, poor: 7300, unit: 'ms', label: 'TTI', name: 'Time to Interactive', desc: 'Thời gian trang web có thể tương tác' },
+};
+
+function getCwvStatus(key, value) {
+  if (value === null) return 'unknown';
+  const t = CWV_THRESHOLDS[key];
+  if (!t) return 'unknown';
+  if (value <= t.good) return 'good';
+  if (value <= t.poor) return 'needs-improvement';
+  return 'poor';
+}
+
+function formatCwvValue(key, value) {
+  if (value === null) return 'N/A';
+  const t = CWV_THRESHOLDS[key];
+  if (!t) return value;
+  if (t.unit === 'ms') {
+    return value >= 1000 ? `${(value / 1000).toFixed(1)}s` : `${Math.round(value)}ms`;
+  }
+  return value.toFixed(3);
+}
+
+function renderWebVitals(data) {
+  const container = $('#vitals-content');
+  if (!container) return;
+
+  // If Lighthouse failed
+  if (!data.lighthouse) {
+    container.innerHTML = `
+      <div class="vitals-error">
+        <div class="vitals-error-icon">⚠️</div>
+        <h3>Lighthouse Audit Không Khả Dụng</h3>
+        <p>${data.lighthouseError || 'Không thể chạy Lighthouse cho URL này.'}</p>
+        <p class="vitals-error-note">Điều này có thể xảy ra với trang yêu cầu đăng nhập, có CAPTCHA, hoặc block headless browsers.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const lhMobile = data.lighthouse.mobile;
+  const lhDesktop = data.lighthouse.desktop;
+  const cwvMobile = data.webVitals?.mobile;
+  const cwvDesktop = data.webVitals?.desktop;
+
+  container.innerHTML = `
+    <!-- Lighthouse Category Scores -->
+    <div class="vitals-section">
+      <div class="vitals-section-header">
+        <h3>🔦 Lighthouse Scores</h3>
+        <div class="vitals-device-toggle">
+          <button class="device-btn active" id="lh-mobile-btn" onclick="toggleLhDevice('mobile')">📱 Mobile</button>
+          <button class="device-btn" id="lh-desktop-btn" onclick="toggleLhDevice('desktop')">💻 Desktop</button>
+        </div>
+      </div>
+
+      <div class="lh-scores-grid" id="lh-scores-grid">
+        ${renderLhScoreCards(lhMobile, lhDesktop, 'mobile')}
+      </div>
+    </div>
+
+    <!-- Core Web Vitals -->
+    <div class="vitals-section">
+      <div class="vitals-section-header">
+        <h3>⚡ Core Web Vitals</h3>
+        <div class="vitals-device-toggle">
+          <button class="device-btn active" id="cwv-mobile-btn" onclick="toggleCwvDevice('mobile')">📱 Mobile</button>
+          <button class="device-btn" id="cwv-desktop-btn" onclick="toggleCwvDevice('desktop')">💻 Desktop</button>
+        </div>
+      </div>
+
+      <div class="cwv-grid" id="cwv-grid">
+        ${renderCwvCards(cwvMobile)}
+      </div>
+    </div>
+
+    <!-- Performance Opportunities -->
+    ${data.lighthouseOpportunities && data.lighthouseOpportunities.length > 0 ? `
+    <div class="vitals-section">
+      <div class="vitals-section-header">
+        <h3>🎯 Cơ hội cải thiện Performance</h3>
+      </div>
+      <div class="opportunities-list">
+        ${data.lighthouseOpportunities.map(opp => `
+          <div class="opportunity-item">
+            <div class="opportunity-score-dot ${opp.score < 0.5 ? 'fail' : opp.score < 0.9 ? 'warn' : 'pass'}"></div>
+            <div class="opportunity-content">
+              <div class="opportunity-title">${escapeHtml(opp.title)}</div>
+              ${opp.displayValue ? `<div class="opportunity-value">${escapeHtml(opp.displayValue)}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+
+    <!-- Accessibility Issues -->
+    ${data.a11yIssues && data.a11yIssues.length > 0 ? `
+    <div class="vitals-section">
+      <div class="vitals-section-header">
+        <h3>♿ Vấn đề Accessibility (WCAG)</h3>
+      </div>
+      <div class="a11y-issues-list">
+        ${data.a11yIssues.map(issue => `
+          <div class="a11y-issue-item">
+            <div class="a11y-score-badge ${issue.score < 0.5 ? 'fail' : 'warn'}">
+              ${Math.round(issue.score * 100)}
+            </div>
+            <div class="a11y-content">
+              <div class="a11y-title">${escapeHtml(issue.title)}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>` : ''}
+  `;
+
+  // Store data for device toggle
+  window._lhData = { mobile: lhMobile, desktop: lhDesktop };
+  window._cwvData = { mobile: cwvMobile, desktop: cwvDesktop };
+}
+
+function renderLhScoreCards(mobileScores, desktopScores, device) {
+  const scores = device === 'mobile' ? mobileScores : desktopScores;
+  const categories = [
+    { key: 'performance', label: 'Performance', icon: '⚡' },
+    { key: 'accessibility', label: 'Accessibility', icon: '♿' },
+    { key: 'bestPractices', label: 'Best Practices', icon: '🛡️' },
+    { key: 'seo', label: 'SEO', icon: '🔎' },
+  ];
+
+  return categories.map(cat => {
+    const score = scores[cat.key] ?? 0;
+    const status = score >= 90 ? 'good' : score >= 50 ? 'needs-improvement' : 'poor';
+    const color = score >= 90 ? '#00e676' : score >= 50 ? '#ffab00' : '#ff5252';
+    const circumference = 2 * Math.PI * 28; // r=28
+    const offset = circumference - (circumference * score) / 100;
+
+    return `
+      <div class="lh-score-card">
+        <div class="lh-score-ring-wrapper">
+          <svg viewBox="0 0 64 64" class="lh-ring-svg">
+            <circle cx="32" cy="32" r="28" class="lh-ring-bg"/>
+            <circle cx="32" cy="32" r="28" class="lh-ring-fill"
+              style="stroke: ${color}; stroke-dasharray: ${circumference}; stroke-dashoffset: ${offset}; transform: rotate(-90deg); transform-origin: center;"/>
+          </svg>
+          <div class="lh-score-num" style="color: ${color}">${score}</div>
+        </div>
+        <div class="lh-score-label">${cat.icon} ${cat.label}</div>
+        <div class="lh-score-status lh-status-${status}">${status === 'good' ? 'Tốt' : status === 'needs-improvement' ? 'Cần cải thiện' : 'Kém'}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderCwvCards(cwv) {
+  if (!cwv) return '<p class="vitals-no-data">Không có dữ liệu Core Web Vitals</p>';
+
+  const metrics = ['lcp', 'fcp', 'cls', 'tbt', 'si', 'tti'];
+
+  return metrics.map(key => {
+    const metric = cwv[key];
+    const threshold = CWV_THRESHOLDS[key];
+    if (!threshold) return '';
+
+    const value = metric?.value ?? null;
+    const displayValue = metric?.displayValue || formatCwvValue(key, value);
+    const status = getCwvStatus(key, value);
+    const statusLabel = { good: '🟢 Tốt', 'needs-improvement': '🟡 Cần cải thiện', poor: '🔴 Kém', unknown: '⚪ N/A' };
+    const statusClass = { good: 'cwv-good', 'needs-improvement': 'cwv-warn', poor: 'cwv-poor', unknown: 'cwv-unknown' };
+
+    return `
+      <div class="cwv-card ${statusClass[status]}">
+        <div class="cwv-header">
+          <span class="cwv-label">${threshold.label}</span>
+          <span class="cwv-status-badge">${statusLabel[status]}</span>
+        </div>
+        <div class="cwv-value">${displayValue}</div>
+        <div class="cwv-name">${threshold.name}</div>
+        <div class="cwv-desc">${threshold.desc}</div>
+        <div class="cwv-thresholds">
+          <span class="cwv-threshold-good">≤ ${threshold.unit === 'ms' && threshold.good >= 1000 ? (threshold.good/1000)+'s' : threshold.good}${threshold.unit} tốt</span>
+          <span class="cwv-threshold-poor">≥ ${threshold.unit === 'ms' && threshold.poor >= 1000 ? (threshold.poor/1000)+'s' : threshold.poor}${threshold.unit} kém</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function toggleLhDevice(device) {
+  if (!window._lhData) return;
+  $('#lh-mobile-btn').classList.toggle('active', device === 'mobile');
+  $('#lh-desktop-btn').classList.toggle('active', device === 'desktop');
+  $('#lh-scores-grid').innerHTML = renderLhScoreCards(window._lhData.mobile, window._lhData.desktop, device);
+}
+
+function toggleCwvDevice(device) {
+  if (!window._cwvData) return;
+  $('#cwv-mobile-btn').classList.toggle('active', device === 'mobile');
+  $('#cwv-desktop-btn').classList.toggle('active', device === 'desktop');
+  $('#cwv-grid').innerHTML = renderCwvCards(window._cwvData[device]);
+}
+
 // ==================== Criteria ====================
 function renderCriteria(criteria) {
   const list = $('#criteria-list');
@@ -322,11 +564,14 @@ function renderCriteria(criteria) {
 }
 
 // ==================== Recommendations ====================
-function renderRecommendations(recommendations) {
+function renderRecommendations(recommendations, data) {
   const list = $('#recommendations-list');
   list.innerHTML = '';
 
-  if (recommendations.length === 0) {
+  // Add Lighthouse opportunities to recommendations if available
+  const allRecs = [...(recommendations || [])];
+
+  if (allRecs.length === 0) {
     list.innerHTML = `
       <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
         <div style="font-size: 3rem; margin-bottom: 1rem;">🎉</div>
@@ -339,7 +584,7 @@ function renderRecommendations(recommendations) {
 
   const priorityLabels = { high: 'Ưu tiên cao', medium: 'Ưu tiên trung bình', low: 'Ưu tiên thấp' };
 
-  recommendations.forEach((rec, idx) => {
+  allRecs.forEach((rec, idx) => {
     const card = document.createElement('div');
     card.className = `recommendation-card priority-${rec.priority}`;
     card.style.animation = `fadeInUp 0.4s ease ${idx * 0.08}s both`;

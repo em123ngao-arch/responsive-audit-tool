@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Responsive Audit Tool — Đánh giá Responsive Design</title>
-  <meta name="description" content="Công cụ đánh giá responsive design hiện đại cho website. Phân tích 12 tiêu chí, chấm điểm và đưa ra khuyến nghị cải thiện.">
+  <meta name="description" content="Công cụ đánh giá responsive design hiện đại cho website. Phân tích 12 tiêu chí DOM, Lighthouse Performance/Accessibility/SEO và Core Web Vitals thực tế.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -23,14 +23,14 @@
     <section class="hero" id="hero-section">
       <div class="hero-badge">
         <span class="badge-dot"></span>
-        Responsive Design Audit Tool v1.0
+        Responsive Design Audit Tool v2.0 · Powered by Lighthouse
       </div>
       <h1 class="hero-title">
-        Đánh giá <span class="gradient-text">Responsive</span><br>
-        cho Website của bạn
+        Đánh giá <span class="gradient-text">Toàn diện</span><br>
+        Responsive + Web Vitals
       </h1>
       <p class="hero-subtitle">
-        Phân tích 12 tiêu chí responsive chuẩn hiện đại, chụp screenshot tại 6 viewport sizes và đưa ra khuyến nghị cải thiện chi tiết.
+        Phân tích 12 tiêu chí responsive DOM, đo Core Web Vitals (LCP, FCP, CLS, TBT) và chạy Lighthouse audit (Performance, Accessibility, SEO, Best Practices) tại 6 viewport sizes.
       </p>
 
       <!-- URL Input -->
@@ -59,8 +59,17 @@
           </button>
         </div>
         <div class="input-hint">
-          Nhấn Enter hoặc click nút để bắt đầu • Quá trình audit mất khoảng 30-60 giây
+          Nhấn Enter hoặc click nút để bắt đầu • Quá trình audit mất khoảng 50–70 giây
         </div>
+      </div>
+
+      <!-- Feature pills -->
+      <div class="feature-pills">
+        <span class="pill">📱 6 Viewports</span>
+        <span class="pill">🔍 12 DOM Criteria</span>
+        <span class="pill">⚡ Core Web Vitals</span>
+        <span class="pill">♿ Accessibility</span>
+        <span class="pill">🔎 SEO Audit</span>
       </div>
     </section>
 
@@ -73,7 +82,7 @@
           <div class="spinner-ring"></div>
           <div class="spinner-icon">🔍</div>
         </div>
-        <h2 class="loading-title">Đang phân tích responsive...</h2>
+        <h2 class="loading-title">Đang phân tích toàn diện...</h2>
         <p class="loading-url" id="loading-url"></p>
         <div class="loading-steps" id="loading-steps">
           <div class="step active" id="step-1">
@@ -90,11 +99,19 @@
           </div>
           <div class="step" id="step-4">
             <div class="step-dot"></div>
-            <span>Phân tích DOM & CSS</span>
+            <span>Phân tích DOM &amp; CSS</span>
           </div>
           <div class="step" id="step-5">
             <div class="step-dot"></div>
-            <span>Tạo báo cáo</span>
+            <span>Chạy Lighthouse (mobile)</span>
+          </div>
+          <div class="step" id="step-6">
+            <div class="step-dot"></div>
+            <span>Chạy Lighthouse (desktop)</span>
+          </div>
+          <div class="step" id="step-7">
+            <div class="step-dot"></div>
+            <span>Tổng hợp báo cáo</span>
           </div>
         </div>
         <div class="loading-progress">
@@ -146,6 +163,7 @@
               <span class="grade-label" id="grade-label"></span>
             </div>
             <p class="score-description" id="score-description"></p>
+            <div class="score-breakdown" id="score-breakdown"></div>
           </div>
         </div>
 
@@ -180,6 +198,10 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
           Screenshots
         </button>
+        <button class="tab" data-tab="vitals" onclick="switchTab('vitals')">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          Web Vitals
+        </button>
         <button class="tab" data-tab="criteria" onclick="switchTab('criteria')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
           Chi tiết đánh giá
@@ -193,6 +215,11 @@
       <!-- Tab Content: Screenshots -->
       <div class="tab-content active" id="tab-screenshots">
         <div class="screenshots-grid" id="screenshots-grid"></div>
+      </div>
+
+      <!-- Tab Content: Web Vitals (Lighthouse) -->
+      <div class="tab-content" id="tab-vitals">
+        <div id="vitals-content"></div>
       </div>
 
       <!-- Tab Content: Criteria -->
@@ -217,7 +244,7 @@
   </div>
 
   <footer class="footer">
-    <p>Responsive Audit Tool — Built with Puppeteer & Modern Web Standards</p>
+    <p>Responsive Audit Tool v2.0 — Built with Puppeteer, Lighthouse &amp; Modern Web Standards</p>
   </footer>
 
   <script src="app.js"></script>

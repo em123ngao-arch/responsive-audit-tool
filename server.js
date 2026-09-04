@@ -36,7 +36,10 @@ app.post('/api/audit', async (req, res) => {
     return res.status(400).json({ error: 'Invalid URL format' });
   }
 
-  console.log(`\n🔍 Starting audit for: ${parsedUrl.href}`);
+  // Increase response timeout to 150 seconds to accommodate Lighthouse (mobile + desktop audits)
+  res.setTimeout(150000);
+
+  console.log(`\n🔍 Starting full audit for: ${parsedUrl.href}`);
   const startTime = Date.now();
 
   let browser;
@@ -51,8 +54,8 @@ app.post('/api/audit', async (req, res) => {
         '--disable-software-rasterizer',
         '--no-first-run',
         '--no-zygote',
-        '--single-process',
         '--window-size=1920,1080',
+        '--remote-debugging-port=0', // Required for Lighthouse DevTools Protocol connection
       ],
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
@@ -60,8 +63,9 @@ app.post('/api/audit', async (req, res) => {
     const results = await runAudit(browser, parsedUrl.href);
     results.auditDuration = ((Date.now() - startTime) / 1000).toFixed(2) + 's';
 
+    const lhStatus = results.lighthouse ? '✅ Lighthouse OK' : '⚠️ Lighthouse skipped';
     console.log(`✅ Audit completed in ${results.auditDuration}`);
-    console.log(`   Score: ${results.overallScore}/100 (${results.grade.label})`);
+    console.log(`   Score: ${results.overallScore}/100 (${results.grade.label}) | DOM: ${results.domScore} | ${lhStatus}`);
 
     res.json(results);
   } catch (err) {

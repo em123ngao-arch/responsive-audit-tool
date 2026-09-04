@@ -288,40 +288,74 @@ async function analyzeViewport(browser, url, viewport) {
   const page = await browser.newPage();
 
   try {
-    // Set modern User-Agent to avoid antibot blocks
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36');
+    // ── Stealth: bypass bot detection (fixes YouTube, Google, etc.) ──
+    // Ref: https://github.com/addyosmani/puppeteer-webperf
+    await page.evaluateOnNewDocument(() => {
+      // Hide webdriver flag
+      Object.defineProperty(navigator, 'webdriver', { get: () => false });
+      // Fake plugins (headless has 0 plugins)
+      Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3] });
+      // Fake language
+      Object.defineProperty(navigator, 'languages', { get: () => ['vi-VN', 'vi', 'en-US', 'en'] });
+      // Remove automation property
+      delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
+      delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
+      delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+    });
+
+    // ── Set extra HTTP headers to look more like a real browser ──
+    await page.setExtraHTTPHeaders({
+      'Accept-Language': 'vi-VN,vi;q=0.9,en-US;q=0.8,en;q=0.7',
+      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+    });
+
+    // Set modern User-Agent (mobile or desktop based on viewport)
+    const mobileUA = 'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.6367.82 Mobile Safari/537.36';
+    const desktopUA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';
+    const isMobile = viewport.category.startsWith('Mobile');
+    await page.setUserAgent(isMobile ? mobileUA : desktopUA);
 
     await page.setViewport({
       width: viewport.width,
       height: viewport.height,
-      deviceScaleFactor: 1, // 1 for high performance and low memory
-      isMobile: viewport.category.startsWith('Mobile'),
+      deviceScaleFactor: 1,
+      isMobile,
       hasTouch: viewport.category !== 'Desktop' && viewport.category !== 'Desktop L',
     });
 
+    // ── Page navigation with fallback chain ──
     const startTime = Date.now();
     try {
-      await page.goto(url, {
-        waitUntil: 'domcontentloaded',
-        timeout: 15000,
-      });
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20000 });
     } catch (e) {
-      // If domcontentloaded fails or times out, try continuing if page has content
-      console.warn(`Warning loading ${viewport.name}:`, e.message);
+      console.warn(`Warning loading ${viewport.name} (domcontentloaded):`, e.message);
+      // Fallback: try with just 'commit' (page started loading)
+      try {
+        await page.goto(url, { waitUntil: 'commit', timeout: 10000 });
+      } catch (e2) {
+        console.warn(`Warning loading ${viewport.name} (commit):`, e2.message);
+        // Continue with whatever is loaded
+      }
     }
 
     const loadTime = Date.now() - startTime;
 
-    // Small delay for CSS layout settle
-    await new Promise(r => setTimeout(r, 400));
+    // Longer settle time for heavy SPAs (YouTube, Google, etc.)
+    await new Promise(r => setTimeout(r, 800));
 
-    // Take screenshot
-    const screenshot = await page.screenshot({
-      encoding: 'base64',
-      fullPage: false,
-      type: 'webp',
-      quality: 70,
-    });
+    // ── Screenshot (non-fatal: Protocol errors are common on bot-protected sites) ──
+    let screenshot = null;
+    try {
+      screenshot = await page.screenshot({
+        encoding: 'base64',
+        fullPage: false,
+        type: 'webp',
+        quality: 65,
+      });
+    } catch (screenshotErr) {
+      console.warn(`Screenshot failed for ${viewport.name}:`, screenshotErr.message);
+      // screenshot stays null — handled gracefully in results
+    }
 
     // Run DOM analysis
     const analysis = await page.evaluate((vpWidth) => {
@@ -535,7 +569,7 @@ async function analyzeViewport(browser, url, viewport) {
 
     return {
       viewport,
-      screenshot: `data:image/webp;base64,${screenshot}`,
+      screenshot: screenshot ? `data:image/webp;base64,${screenshot}` : null,
       loadTime,
       ...analysis,
     };

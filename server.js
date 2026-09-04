@@ -55,7 +55,12 @@ app.post('/api/audit', async (req, res) => {
         '--no-first-run',
         '--no-zygote',
         '--window-size=1920,1080',
-        '--remote-debugging-port=0', // Required for Lighthouse DevTools Protocol connection
+        '--remote-debugging-port=0',        // Required for Lighthouse
+        '--disable-blink-features=AutomationControlled', // KEY: bypass YouTube/Google bot detection
+        '--disable-features=IsolateOrigins,site-per-process', // Prevent renderer crashes
+        '--disable-web-security',           // Reduce cross-origin blocks
+        '--allow-running-insecure-content',
+        '--ignore-certificate-errors',      // Handle self-signed certs
       ],
       executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     });
